@@ -57,14 +57,19 @@
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
               <p>{{ msg.text }}</p> 
             </div>
-            <div class="like-btn">
-              <form method="POST">
-                  <a type="submit" href="/messages/{{msg.id}}/like">
-                    <i  class="far fa-thumbs-up fa-lg"></i>
-                  </a>
+            {% if msg.user.id != g.user.id %}
+            <div class="like-btn-container">
+              <form action="/messages/{{msg.id}}/like" method="POST">
+                  <button class="like-btn" type="submit">
+                    {% if msg in g.user.likes %}
+                    <i  class="fas fa-thumbs-up fa-2x"></i>
+                    {% else %}
+                    <i  class="far fa-thumbs-up fa-2x"></i>
+                    {% endif %}
+                  </button>
               </form>
-              
             </div>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>

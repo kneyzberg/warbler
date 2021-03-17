@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, EditProfileForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, LikedMessage
 
 CURR_USER_KEY = "curr_user"
 
@@ -308,22 +308,25 @@ def messages_destroy(message_id):
 
     return redirect(f"/users/{g.user.id}")
 
-@app.route('/messages/<int:message_id>/like', methods=["GET", "POST"])
+@app.route('/messages/<int:message_id>/like', methods=["POST"])
 def add_liked_message(message_id):
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
-    message = Message.query.get_or_404(message_id)
-    g.user.liked_messages.append(message)
-    return redirect("/")
 
-# @app.route('/users/<int:user.id>/liked_messages', methods=["GET"])
-# def show_liked_messages(message_id):
-#     if not g.user:
-#         flash("Access unauthorized.", "danger")
-#         return redirect("/")
-#     g.user.liked_messages.append(message_id)
-#     return redirect("/")
+    message = Message.query.get_or_404(message_id)
+
+    #add validation that msg is not by user
+
+    if message in g.user.likes:
+        LikedMessage.query.filter(LikedMessage.message_id == message_id, LikedMessage.user_id == g.user.id).delete()
+        db.session.commit()
+
+    else: 
+        g.user.likes.append(message)
+        db.session.commit()
+
+    return redirect(request.referrer)
 
 
 
