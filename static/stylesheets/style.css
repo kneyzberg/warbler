@@ -284,9 +284,16 @@ nav + .container {
   padding: 7px 20px 12px;
 }
 
-#messages .like-btn{
+#messages .like-btn-container {
   align-self: flex-end;
   margin-left: auto;
+}
+
+.like-btn {
+  border: 0;
+  background-color: transparent;
+  font-size: 100%;
+  padding: 0;
   color: #007bff;
 }
 
