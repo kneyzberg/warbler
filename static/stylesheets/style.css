@@ -287,13 +287,13 @@ nav + .container {
 #messages .like-btn-container {
   align-self: flex-end;
   margin-left: auto;
+  z-index: 3;
 }
 
 .like-btn {
   border: 0;
   background-color: transparent;
   font-size: 100%;
-  padding: 0;
   color: #007bff;
 }
 
