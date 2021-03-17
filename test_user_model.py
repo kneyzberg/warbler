@@ -17,6 +17,7 @@ from models import db, User, Message, Follows
 
 os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
+
 # Now we can import app
 
 from app import app
@@ -27,9 +28,27 @@ from app import app
 
 db.create_all()
 
+app.config["TESTING"] = True
+
+USER_DATA = {
+    "email": "minestrone@gmail.com",
+    "username": "minestrone",
+    "bio": "I love is soup",
+    "location": "BAYYY AREAAAA"
+    "password": "password"
+}
+
+USER_DATA2 = {
+    "email": "bisque@gmail.com",
+    "username": "bouillabaisse",
+    "bio": "soup or bust",
+    "location": "Soup Cove"
+    "password": "password"
+}
+
 
 class UserModelTestCase(TestCase):
-    """Test views for messages."""
+    """Test model instances."""
 
     def setUp(self):
         """Create test client, add sample data."""
@@ -37,6 +56,12 @@ class UserModelTestCase(TestCase):
         User.query.delete()
         Message.query.delete()
         Follows.query.delete()
+
+        user1 = User.signup(**USER_DATA)
+        user2 = User.signup(**USER_DATA2)
+        db.session.add(user1)
+        db.session.add(user2)
+        db.session.commit()
 
         self.client = app.test_client()
 
