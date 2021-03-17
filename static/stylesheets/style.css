@@ -284,6 +284,12 @@ nav + .container {
   padding: 7px 20px 12px;
 }
 
+#messages .like-btn{
+  align-self: flex-end;
+  margin-left: auto;
+  color: #007bff;
+}
+
 #messages:not(.no-hover) .list-group-item:hover {
   background-color: #e6ecf0;
 }

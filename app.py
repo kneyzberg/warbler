@@ -201,17 +201,26 @@ def stop_following(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
+@app.route('/users/<int:user_id>/likes', methods=["GET"])
+def show_liked_messages(user_id):
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    return render_template("/users/likes.html", user=g.user)
+
+
 
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
 
-    form = EditProfileForm(obj=g.user)
-
     if not g.user:
         flash("Access unauthorized.", "danger")
         return redirect("/")
     
+    form = EditProfileForm(obj=g.user)
+
     if form.validate_on_submit():
         password = form.password.data
 
@@ -219,7 +228,7 @@ def profile():
 
         if not authenticate:
             flash("Invalid password")
-            return redirect ("/")
+            return redirect("/")
 
         else:
 
@@ -299,6 +308,24 @@ def messages_destroy(message_id):
 
     return redirect(f"/users/{g.user.id}")
 
+@app.route('/messages/<int:message_id>/like', methods=["GET", "POST"])
+def add_liked_message(message_id):
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    message = Message.query.get_or_404(message_id)
+    g.user.liked_messages.append(message)
+    return redirect("/")
+
+# @app.route('/users/<int:user.id>/liked_messages', methods=["GET"])
+# def show_liked_messages(message_id):
+#     if not g.user:
+#         flash("Access unauthorized.", "danger")
+#         return redirect("/")
+#     g.user.liked_messages.append(message_id)
+#     return redirect("/")
+
+
 
 ##############################################################################
 # Homepage and error pages
@@ -313,8 +340,12 @@ def homepage():
     """
 
     if g.user:
+        following_ids = [user.id for user in g.user.following]
+
         messages = (Message
                     .query
+                    .filter((Message.user == g.user) |
+                            (Message.user_id.in_(following_ids)))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())

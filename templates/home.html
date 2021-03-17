@@ -55,7 +55,15 @@
             <div class="message-area">
               <a href="/users/{{ msg.user.id }}">@{{ msg.user.username }}</a>
               <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
-              <p>{{ msg.text }}</p>
+              <p>{{ msg.text }}</p> 
+            </div>
+            <div class="like-btn">
+              <form method="POST">
+                  <a type="submit" href="/messages/{{msg.id}}/like">
+                    <i  class="far fa-thumbs-up fa-lg"></i>
+                  </a>
+              </form>
+              
             </div>
           </li>
         {% endfor %}
