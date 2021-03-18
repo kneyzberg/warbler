@@ -53,6 +53,7 @@ class UserModelTestCase(TestCase):
     def setUp(self):
         """Create test client, add sample data."""
 
+        db.session.rollback()
         User.query.delete()
         Message.query.delete()
         Follows.query.delete()
@@ -61,12 +62,15 @@ class UserModelTestCase(TestCase):
         user2 = User.signup(**USER_DATA2)
         db.session.add(user1)
         db.session.add(user2)
-        db.session.commit()
-        db.session.rollback()
+        db.session.commit()    
 
         self.client = app.test_client()
         self.user1 = user1
         self.user2 = user2
+
+    # def tearDown(self):
+    #     db.session.rollback()
+
 
     def test_user_model(self):
         """Does basic model work?"""
@@ -136,13 +140,12 @@ class UserModelTestCase(TestCase):
     
     def test_not_unique_user_signup(self):
         """Test User signup method fails with invalid credentials"""
-        try:
+        with self.assertRaises(IntegrityError):
             duplicate_user = User.signup(username="minestrone",
                                          email="minestrone@gmail.com",
                                          password="HASHED PASSWORD",
                                          image_url=None)
-        except IntegrityError:
-            duplicateError = "user already exists"
+            db.session.commit()
     
-        self.assertEqual(duplicateError, "user already exists")
-    
+    def test_authenticate_valid(self):
+        """
