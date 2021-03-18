@@ -10,6 +10,7 @@ from unittest import TestCase
 from app import IntegrityError, DataError, request
 
 from models import db, User, Message, Follows, LikedMessage
+from test_seed import USER_DATA, USER_DATA2, MESSAGE, TEST_GEN_USER, TEST_GEN_USER2, TEST_GEN_MSG, TEST_GEN_MSG2
 
 os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
@@ -25,28 +26,9 @@ db.create_all()
 app.config["TESTING"] = True
 app.config["WTF_CSRF_ENABLED"] = False
 
-USER_DATA = {
-    "email": "minestrone@gmail.com",
-    "username": "minestrone",
-    "password": "password",
-    "image_url": None,
-}
-
-USER_DATA2 = {
-    "email": "bisque@gmail.com",
-    "username": "bouillabaisse",
-    "password": "password",
-    "image_url": "www.image.com"
-
-}
-
-MESSAGE = {
-    "text": "Have a SOUPER day",
-    "timestamp":  None
-}
 
 
-class TestUserViewFunctions(TestCase):
+class SignupLoginLogoutViewFunctions(TestCase):
 
     def setUp(self):
         db.session.rollback()
@@ -106,4 +88,56 @@ class TestUserViewFunctions(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f"Hello, {self.user1.username}!", html)
 
+    def test_user_logout(self):
+        with app.test_client() as client:
+            client.post("/login", data={"username": self.user1.username,
+                                               "password": USER_DATA["password"]
+                                                }, follow_redirects=True)
 
+            resp = client.get("/logout", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+    
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("You have successfully logged out!", html)
+
+
+class GeneralUserRouteViewFunctions(TestCase):
+
+    def setUp(self):
+        db.session.rollback()
+        User.query.delete()
+        Message.query.delete()
+        Follows.query.delete()
+
+        user1 = User.signup(**TEST_GEN_USER)
+        user2 = User.signup(**TEST_GEN_USER2)
+        db.session.add(user1)
+        db.session.add(user2)
+        db.session.commit()
+        self.client = app.test_client()
+
+        self.user1 = User.query.filter_by(username=user1.username).first()
+        self.user2 = User.query.filter_by(username=user2.username).first()
+
+        with app.test_client() as client:
+            client.post("/login", data={"username": self.user1.username,
+                                               "password": TEST_GEN_USER["password"]
+                                                }, follow_redirects=True)
+
+    def test_users_page(self):
+        with app.test_client() as client:
+            resp = client.get("/users")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f"<p>@{self.user2.username}</p>", html)
+    
+    def test_users_profile(self):
+        with app.test_client() as client:
+            resp = client.get(f"/users/{self.user2.id}")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f'alt="Image for {self.user2.username}"', html)
+
+                        
