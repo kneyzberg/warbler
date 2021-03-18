@@ -316,17 +316,18 @@ def add_liked_message(message_id):
 
     message = Message.query.get_or_404(message_id)
 
-    if message.user is not g.user:
-        if message in g.user.likes:
+    if message in g.user.likes:
             LikedMessage.query.filter(LikedMessage.message_id == message_id, LikedMessage.user_id == g.user.id).delete()
             db.session.commit()
-
-        else: 
-            g.user.likes.append(message)
-            db.session.commit()
     else: 
-        flash("You can't like your own messages!")
-    
+        valid_like = message.check_valid_like(g.user)
+
+        if valid_like:
+            message.users_liked.append(g.user)
+            db.session.commit()
+        else: 
+            flash("You can't like your own messages!")
+
     return redirect(request.referrer)
         
 

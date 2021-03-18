@@ -154,6 +154,7 @@ class Message(db.Model):
     id = db.Column(
         db.Integer,
         primary_key=True,
+        autoincrement=True
     )
 
     text = db.Column(
@@ -176,6 +177,14 @@ class Message(db.Model):
     user = db.relationship('User')
 
     users_liked = db.relationship('User', secondary="liked_messages")
+
+    def check_valid_like(self, user):
+
+        return self.user_id != user.id
+
+
+    def __repr__(self):
+        return f"<Message #{self.id}: {self.timestamp}, {self.user_id}"
 
 
 class LikedMessage(db.Model):
