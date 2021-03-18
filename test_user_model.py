@@ -148,4 +148,22 @@ class UserModelTestCase(TestCase):
             db.session.commit()
     
     def test_authenticate_valid(self):
-        """
+        """Test for valid authentication """
+
+        valid_user = User.authenticate(self.user1.username, USER_DATA["password"])
+
+        self.assertEqual(self.user1, valid_user)
+
+    def test_authenticate_invalid_password(self):
+        """Test for invalid password authentication """
+
+        invalid_user = User.authenticate(self.user1.username, "badpassword")
+
+        self.assertFalse(invalid_user)
+
+    def test_authenticate_invalid_password(self):
+        """Test for invalid password authentication """
+
+        invalid_user = User.authenticate("pasta e fagioli", USER_DATA["password"])
+
+        self.assertFalse(invalid_user)
