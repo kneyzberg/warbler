@@ -15,7 +15,7 @@ from test_seed import USER_DATA, USER_DATA2, MESSAGE, TEST_GEN_USER, TEST_GEN_US
 os.environ['DATABASE_URL'] = "postgresql:///warbler-test"
 
 
-from app import app
+from app import app, CURR_USER_KEY
 
 # Create our tables (we do this here, so we only create the tables
 # once for all tests --- in each test, we'll delete the data
@@ -119,25 +119,44 @@ class GeneralUserRouteViewFunctions(TestCase):
         self.user1 = User.query.filter_by(username=user1.username).first()
         self.user2 = User.query.filter_by(username=user2.username).first()
 
-        with app.test_client() as client:
-            client.post("/login", data={"username": self.user1.username,
-                                               "password": TEST_GEN_USER["password"]
-                                                }, follow_redirects=True)
 
     def test_users_page(self):
-        with app.test_client() as client:
-            resp = client.get("/users")
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            resp = c.get("/users")
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f"<p>@{self.user2.username}</p>", html)
     
     def test_users_profile(self):
-        with app.test_client() as client:
-            resp = client.get(f"/users/{self.user2.id}")
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+            resp = c.get(f"/users/{self.user2.id}")
             html = resp.get_data(as_text=True)
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn(f'alt="Image for {self.user2.username}"', html)
+
+    def test_users_following_page(self):
+
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            self.user1 = User.query.filter_by(username=self.user1.username).first()
+            self.user1.following.append(self.user2)
+            db.session.commit()
+
+            resp = c.get(f"/users/{self.user1.id}/following")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(self.user1.following), 1)
+            self.assertIn(f"<p>@{self.user2.username}</p>", html)
+            
 
                         
