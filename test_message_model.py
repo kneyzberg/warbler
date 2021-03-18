@@ -7,7 +7,7 @@
 
 import os
 from unittest import TestCase
-from app import IntegrityError
+from app import IntegrityError, DataError
 
 from models import db, User, Message, Follows, LikedMessage
 
@@ -118,3 +118,32 @@ class UserModelTestCase(TestCase):
         user1_msg = self.message.check_valid_like(self.user1)
 
         self.assertFalse(user1_msg)
+    
+    def test_unlike_message(self):
+        """Test user unliking message"""
+        self.user2.likes.append(self.message)
+        db.session.commit()
+
+        LikedMessage.query.filter(LikedMessage.message_id == self.message.id,
+                                  LikedMessage.user_id == self.user2.id).delete()
+        db.session.commit()
+
+        self.assertNotIn(self.message, self.user2.likes)
+
+    def test_invalid_message(self):
+        """Test that empty String can't be saved as a message"""
+        with self.assertRaises(IntegrityError):
+            new_msg = Message(text=None, timestamp=None, user_id=self.user1.id)
+            db.session.add(new_msg)
+            db.session.commit()
+
+    def test_long_message(self):
+        """Test that you can't write message over character limit"""
+
+        text = """TTTTTTHIS  IS REALLLLLLLLLLLLLLLLLYYYYYYYYYYYYYYYYYYY LONNNNNNG
+              SOOOO LONG I NEED TWO LINES TO WRITE ITTTTTTTTTTTTTTTTTTTTTTTTTT"""
+
+        with self.assertRaises(DataError):
+            new_msg = Message(text=text, timestamp=None, user_id=self.user1.id)
+            db.session.add(new_msg)
+            db.session.commit()
