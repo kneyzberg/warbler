@@ -111,8 +111,14 @@ class GeneralUserRouteViewFunctions(TestCase):
 
         user1 = User.signup(**TEST_GEN_USER)
         user2 = User.signup(**TEST_GEN_USER2)
+        message2 = Message(**TEST_GEN_MSG2)
+        message1 = Message(**TEST_GEN_MSG)
+        
         db.session.add(user1)
         db.session.add(user2)
+        user1.messages.append(message1)
+        user2.messages.append(message2)
+        
         db.session.commit()
         self.client = app.test_client()
 
@@ -204,3 +210,79 @@ class GeneralUserRouteViewFunctions(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertNotIn(username, html)
+
+
+    def test_show_liked_messages(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            self.user1 = User.query.filter_by(username=self.user1.username).first()
+            new_msg = Message.query.filter_by(user_id=self.user2.id).first()
+            
+            self.user1.likes.append(new_msg)
+            db.session.commit()
+
+            self.user1 = User.query.filter_by(username=self.user1.username).first()
+            msg = Message.query.filter_by(user_id=self.user2.id).first()
+
+            resp = c.get(f"/users/{self.user1.id}/likes")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn(f"<p>{ msg.text }</p>", html)
+
+    def test_edit_profile(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            resp = c.get(f"/users/profile")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h2 class="join-message">Edit Your Profile.</h2>', html)
+
+    def test_edit_profile_form(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            resp = c.post("/users/profile", data={
+                        "email": "avocado@gmail.com",
+                        "username": "avocado_toasties",
+                        "password": "password",
+                        "image_url": "www.image.com"
+                    }, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("avocado_toasties", html)
+
+    def test_edit_profile_form_fail(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            resp = c.post("/users/profile", data={
+                        "email": "avocado@gmail.com",
+                        "username": "avocado_toasties",
+                        "password": "passWORD",
+                        "image_url": "www.image.com"
+                    }, follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Invalid password", html)
+    
+    def test_delete_user(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            resp = c.post("/users/delete", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<h2 class="join-message">Join Warbler today.</h2>', html)
+            

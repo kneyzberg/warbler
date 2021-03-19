@@ -253,6 +253,9 @@ def delete_user():
 
     do_logout()
 
+    Message.query.filter_by(user_id=g.user.id).delete()
+    db.session.commit()
+
     db.session.delete(g.user)
     db.session.commit()
 

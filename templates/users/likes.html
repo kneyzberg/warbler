@@ -6,7 +6,7 @@
       {% for message in user.likes %}
 
         <li class="list-group-item">
-          <a href="/messages/{{ message.id }}" class="message-link"/>
+          <a href="/messages/{{ message.id }}" class="message-link"></a>
 
           <a href="/users/{{ message.user.id }}">
             <img src="{{ message.user.image_url }}" alt="user image" class="timeline-image">
