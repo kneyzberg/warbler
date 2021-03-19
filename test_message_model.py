@@ -82,7 +82,7 @@ class UserModelTestCase(TestCase):
 
     def test_add_new_message(self):
         """ Test post new message """
-        new_msg = Message(text="HELLO", timestamp=None,user_id=self.user2.id)
+        new_msg = Message(text="HELLO", timestamp=None, user_id=self.user2.id)
 
         db.session.add(new_msg)
         db.session.commit()

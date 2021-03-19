@@ -68,10 +68,6 @@ class UserModelTestCase(TestCase):
         self.user1 = user1
         self.user2 = user2
 
-    # def tearDown(self):
-    #     db.session.rollback()
-
-
     def test_user_model(self):
         """Does basic model work?"""
 
@@ -161,8 +157,8 @@ class UserModelTestCase(TestCase):
 
         self.assertFalse(invalid_user)
 
-    def test_authenticate_invalid_password(self):
-        """Test for invalid password authentication """
+    def test_authenticate_invalid_username(self):
+        """Test for invalid username authentication """
 
         invalid_user = User.authenticate("pasta e fagioli", USER_DATA["password"])
 

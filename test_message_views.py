@@ -129,9 +129,6 @@ class MessageViewTestCase(TestCase):
 
 
 
-            
-        
-
 
 
 
