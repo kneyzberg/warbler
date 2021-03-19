@@ -285,4 +285,87 @@ class GeneralUserRouteViewFunctions(TestCase):
 
             self.assertEqual(resp.status_code, 200)
             self.assertIn('<h2 class="join-message">Join Warbler today.</h2>', html)
-            
+    
+
+class GenUserFunctionLoggedOutTest(TestCase):
+
+    def setUp(self):
+        db.session.rollback()
+        User.query.delete()
+        Message.query.delete()
+        Follows.query.delete()
+
+        user1 = User.signup(**TEST_GEN_USER)
+        user2 = User.signup(**TEST_GEN_USER2)
+        message2 = Message(**TEST_GEN_MSG2)
+        message1 = Message(**TEST_GEN_MSG)
+        
+        db.session.add(user1)
+        db.session.add(user2)
+        user1.messages.append(message1)
+        user2.messages.append(message2)
+        
+        db.session.commit()
+        self.client = app.test_client()
+
+        self.user1 = User.query.filter_by(username=TEST_GEN_USER["username"]).first()
+        self.user2 = User.query.filter_by(username=TEST_GEN_USER2["username"]).first()
+
+    def test_user_following_logged_out(self):
+        with app.test_client() as c:
+            resp = c.get(f"/users/{self.user1.id}/following", follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<div class="alert alert-danger">Access unauthorized.</div>', html)
+            self.assertIn("<h1>What's Happening?</h1>", html)
+    
+    def test_user_follower_logged_out(self):
+        with app.test_client() as c:
+            resp = c.get(f"/users/{self.user1.id}/followers", follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<div class="alert alert-danger">Access unauthorized.</div>', html)
+            self.assertIn("<h1>What's Happening?</h1>", html)
+
+    
+    def test_user_likes_logged_out(self):
+        with app.test_client() as c:
+            resp = c.get(f"/users/{self.user1.id}/likes", follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<div class="alert alert-danger">Access unauthorized.</div>', html)
+            self.assertIn("<h1>What's Happening?</h1>", html)
+    
+    def test_user_profile_logged_out(self):
+        with app.test_client() as c:
+            resp = c.get("/users/profile", follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<div class="alert alert-danger">Access unauthorized.</div>', html)
+            self.assertIn("<h1>What's Happening?</h1>", html)
+    
+    def test_user_delete_logged_out(self):
+        with app.test_client() as c:
+            resp = c.post("/users/delete", follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn('<div class="alert alert-danger">Access unauthorized.</div>', html)
+            self.assertIn("<h1>What's Happening?</h1>", html)
+    
+    
+
+
+
+
+
+
+
+
+
+
+
