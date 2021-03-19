@@ -116,8 +116,8 @@ class GeneralUserRouteViewFunctions(TestCase):
         db.session.commit()
         self.client = app.test_client()
 
-        self.user1 = User.query.filter_by(username=user1.username).first()
-        self.user2 = User.query.filter_by(username=user2.username).first()
+        self.user1 = User.query.filter_by(username=TEST_GEN_USER["username"]).first()
+        self.user2 = User.query.filter_by(username=TEST_GEN_USER2["username"]).first()
 
 
     def test_users_page(self):
@@ -157,6 +157,50 @@ class GeneralUserRouteViewFunctions(TestCase):
             self.assertEqual(resp.status_code, 200)
             self.assertEqual(len(self.user1.following), 1)
             self.assertIn(f"<p>@{self.user2.username}</p>", html)
-            
 
-                        
+    def test_users_follower_page(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            self.user1 = User.query.filter_by(username=self.user1.username).first()
+            self.user1.followers.append(self.user2)
+            db.session.commit()
+
+            resp = c.get(f"/users/{self.user1.id}/followers")
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(self.user1.followers), 1)
+            self.assertIn(f"<p>@{self.user2.username}</p>", html)
+    
+    def test_follow_user(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            resp = c.post(f"/users/follow/{self.user2.id}", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.user1 = User.query.filter_by(username=self.user1.username).first()
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(len(self.user1.following), 1)
+            self.assertIn(f"<p>@{self.user2.username}</p>", html)
+    
+    def test_stop_following(self):
+        with app.test_client() as c:
+            with c.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user1.id
+
+            username = self.user2.username
+            self.user1 = User.query.filter_by(username=self.user1.username).first()
+            self.user2 = User.query.filter_by(username=self.user2.username).first()
+            self.user1.following.append(self.user2)
+            db.session.commit()
+            
+            resp = c.post(f"/users/stop-following/{self.user2.id}", follow_redirects=True)
+            html = resp.get_data(as_text=True)
+
+            self.assertEqual(resp.status_code, 200)
+            self.assertNotIn(username, html)

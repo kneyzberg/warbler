@@ -210,7 +210,6 @@ def show_liked_messages(user_id):
     return render_template("/users/likes.html", user=g.user)
 
 
-
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
